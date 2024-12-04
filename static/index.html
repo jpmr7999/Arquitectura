@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Gastos Comunes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        label {
+            display: block;
+            margin: 10px 0 5px;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Crear Propietario</h2>
+        <form id="form-propietario">
+            <!-- Formulario de propietario -->
+            <label for="rut">RUT:</label>
+            <input type="text" id="rut" name="rut" required><br>
+
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre-propietario" name="nombre-propietario" required><br>
+
+            <label for="ape_pat">Apellido Paterno:</label>
+            <input type="text" id="ape_pat" name="ape_pat" required><br>
+
+            <label for="ape_mat">Apellido Materno:</label>
+            <input type="text" id="ape_mat" name="ape_mat" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="fono1">Teléfono 1:</label>
+            <input type="text" id="fono1" name="fono1" required><br>
+
+            <label for="fono2">Teléfono 2:</label>
+            <input type="text" id="fono2" name="fono2"><br>
+
+            <label for="estado">Estado:</label>
+            <input type="text" id="estado-propietario" name="estado-propietario" required><br>
+
+            <button type="submit">Crear Propietario</button>
+        </form>
+
+        <h2>Crear Edificio</h2>
+        <form id="form-edificio">
+            <!-- Formulario de edificio -->
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre-edificio" name="nombre-edificio" required><br>
+
+            <label for="direccion">Dirección:</label>
+            <input type="text" id="direccion" name="direccion" required><br>
+
+            <label for="inmobiliaria">Inmobiliaria:</label>
+            <input type="text" id="inmobiliaria" name="inmobiliaria" required><br>
+
+            <label for="lat">Latitud:</label>
+            <input type="text" id="lat" name="lat" required><br>
+
+            <label for="log">Longitud:</label>
+            <input type="text" id="log" name="log" required><br>
+
+            <label for="estado">Estado:</label>
+            <input type="text" id="estado-edificio" name="estado-edificio" required><br>
+
+            <label for="npisos">Número de Pisos:</label>
+            <input type="number" id="npisos" name="npisos" required><br>
+
+            <label for="valor_gasto_comun">Valor Gasto Común:</label>
+            <input type="number" id="valor_gasto_comun" name="valor_gasto_comun" required><br>
+
+            <button type="submit">Crear Edificio</button>
+        </form>
+
+        <h1>Crear Departamento</h1>
+        <form id="formDepartamento" onsubmit="event.preventDefault(); enviarFormulario();">
+            <label for="CodDepto">Edificio:</label>
+            <select id="CodDepto" name="CodDepto" required>
+                <option value="">Selecciona un edificio</option>
+            </select><br><br>
+        
+            <label for="piso">Piso:</label>
+            <input type="number" id="piso" name="piso" required><br><br>
+        
+            <label for="numero">Número:</label>
+            <input type="number" id="numero" name="numero" required><br><br>
+        
+            <label for="estado">Estado:</label>
+            <select id="estado" name="estado" required>
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+            </select><br><br>
+        
+            <label for="arrendado">Arrendado:</label>
+            <input type="checkbox" id="arrendado" name="arrendado"><br><br>
+        
+            <label for="rut_prop">RUT del Propietario:</label>
+            <input type="text" id="rut_prop" name="rut_prop" required><br><br>
+        
+            <label for="num_hab">Número de Habitaciones:</label>
+            <input type="number" id="num_hab" name="num_hab" required><br><br>
+        
+            <label for="num_baños">Número de Baños:</label>
+            <input type="number" id="num_baños" name="num_baños" required><br><br>
+        
+            <button type="submit">Crear Departamento</button>
+        </form>
+
+        <h2>Generar Gastos Comunes</h2>
+        <form id="form-generar">
+            <label for="mes-generar">Mes (Opcional):</label>
+            <input type="number" id="mes-generar" min="1" max="12" placeholder="Ejemplo: 10">
+        
+            <label for="año-generar">Año:</label>
+            <input type="number" id="año-generar" min="2000" max="2100" placeholder="Ejemplo: 2024" required>
+        
+            <label for="cod_edificio-generar">Código del Edificio:</label>
+            <input type="text" id="cod_edificio-generar" placeholder="Código del edificio" required>
+        
+            <label for="cod_departamento-generar">Código del Departamento:</label>
+            <input type="text" id="cod_departamento-generar" placeholder="Código del departamento" required>
+        
+            <button type="button" onclick="generarGastos()">Generar</button>
+        </form>
+        
+
+
+
+
+        <!-- Resultados -->
+        <div class="result" id="result">
+            <h3>Resultados</h3>
+            <pre id="output"></pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000';
+
+        // Lógica para cargar los edificios en el formulario
+        window.onload = async function() {
+            const response = await fetch(`${API_BASE}/edificio/listar`);
+            const data = await response.json();
+            const select = document.getElementById("CodDepto");
+
+            data.forEach(edificio => {
+                const option = document.createElement("option");
+                option.value = edificio.Cod;
+                option.text = edificio.Nombre;
+                select.appendChild(option);
+            });
+        }
+
+        // Lógica para crear un propietario
+        document.getElementById("form-propietario").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let rut = document.getElementById("rut").value;
+            let nombre = document.getElementById("nombre-propietario").value;
+            let ape_pat = document.getElementById("ape_pat").value;
+            let ape_mat = document.getElementById("ape_mat").value;
+            let email = document.getElementById("email").value;
+            let fono1 = document.getElementById("fono1").value;
+            let fono2 = document.getElementById("fono2").value;
+            let estado = document.getElementById("estado-propietario").value;
+
+            const data = {
+                rut: rut,
+                nombre: nombre,
+                ape_pat: ape_pat,
+                ape_mat: ape_mat,
+                email: email,
+                fono1: fono1,
+                fono2: fono2,
+                estado: estado
+            };
+
+            fetch(`${API_BASE}/propietario/crear`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error en la solicitud');
+            });
+        });
+
+        // Lógica para crear un edificio
+        document.getElementById("form-edificio").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            let nombre = document.getElementById("nombre-edificio").value;
+            let direccion = document.getElementById("direccion").value;
+            let inmobiliaria = document.getElementById("inmobiliaria").value;
+            let lat = parseFloat(document.getElementById("lat").value);
+            let log = parseFloat(document.getElementById("log").value);
+            let estado = document.getElementById("estado-edificio").value;
+            let npisos = parseInt(document.getElementById("npisos").value);
+            let valor_gasto_comun = parseFloat(document.getElementById("valor_gasto_comun").value);
+
+            const data = {
+                nombre: nombre,
+                direccion: direccion,
+                inmobiliaria: inmobiliaria,
+                lat: lat,
+                log: log,
+                estado: estado,
+                npisos: npisos,
+                valor_gasto_comun: valor_gasto_comun
+            };
+
+            fetch(`${API_BASE}/edificio/crear`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ocurrió un error en la solicitud');
+            });
+        });
+
+        // Función para obtener los edificios y llenar el select
+        async function cargarEdificios() {
+            try {
+                const response = await fetch('http://localhost:5000/edificio/listar'); // Asegúrate de que esta URL sea la correcta
+                const data = await response.json();
+                if (Array.isArray(data)) {
+                    const select = document.getElementById("CodDepto");
+                    data.forEach(edificio => {
+                        const option = document.createElement("option");
+                        option.value = edificio.Cod;
+                        option.textContent = edificio.Nombre;
+                        select.appendChild(option);
+                    });
+                } else {
+                    alert("Error al cargar los edificios.");
+                }
+            } catch (error) {
+                console.error("Error al cargar los edificios:", error);
+                alert("Error al cargar los edificios.");
+            }
+        }
+
+        // Ejecutar al cargar la página
+        window.onload = cargarEdificios;
+
+        // Función para enviar el formulario de creación de departamento
+        async function enviarFormulario() {
+            const formData = new FormData(document.getElementById("formDepartamento"));
+            const data = {
+                cod_edificio: formData.get("CodDepto"),
+                piso: formData.get("piso"),
+                numero: formData.get("numero"),
+                estado: formData.get("estado"),
+                arrendado: formData.get("arrendado") === "on",
+                rut_prop: formData.get("rut_prop"),
+                num_hab: formData.get("num_hab"),
+                num_baños: formData.get("num_baños"),
+                
+            };
+            
+            try {
+                console.log("Datos del formulario enviados:", data);
+                const response = await fetch("http://localhost:5000/departamento/crear", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify(data),
+                });
+                const result = await response.json();
+                alert(result.message || result.error);
+            } catch (error) {
+                console.error("Error al crear el departamento:", error);
+                alert("Error al crear el departamento.");
+            }
+        }
+
+        async function generarGastos() {
+            const mes = document.getElementById('mes-generar').value;
+            const año = document.getElementById('año-generar').value;
+            const cod_edificio = document.getElementById('cod_edificio-generar').value;
+            const cod_departamento = document.getElementById('cod_departamento-generar').value;
+
+            if (!año || !cod_edificio || !cod_departamento) {
+                alert('El campo "Año", "Código de Edificio" y "Código de Departamento" son obligatorios.');
+                return;
+            }
+
+            const data = {
+                año: parseInt(año),
+                cod_edificio: parseInt(cod_edificio),
+                cod_departamento: parseInt(cod_departamento)
+            };
+
+            try {
+                const response = await fetch('http://localhost:5000/gastos/generar', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                document.getElementById('output').textContent = JSON.stringify(result, null, 2);
+            } catch (error) {
+                document.getElementById('output').textContent = error.message;
+            }
+        }
+
+
+    </script>
+</body>
+</html>
