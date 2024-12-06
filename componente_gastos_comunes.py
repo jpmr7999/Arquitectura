@@ -22,6 +22,7 @@ def serve_index():
     # Este código sirve index.html desde la carpeta 'static'
     return send_from_directory('static', 'index.html')
 
+
 # Endpoint para Crear Propietario
 @app.route('/propietario/crear', methods=['POST'])
 def crear_propietario():
@@ -58,6 +59,42 @@ def crear_propietario():
         cursor.close()
         connection.close()
 
+
+# Endpoint para Crear Arrendatarios
+@app.route('/arrendatario/crear', methods=['POST'])
+def crear_arrendatario():
+    data = request.json
+    rutArre = data.get('rutArre')
+    nombre = data.get('nombre')
+    apePat = data.get('apePat')
+    apeMat = data.get('apeMat')
+    email = data.get('email')
+    fono1 = data.get('fono1')
+    fono2 = data.get('fono2')
+    estado = data.get('estado')
+
+    if not all([rutArre, nombre, apePat, apeMat, email, fono1, estado]):
+        return jsonify({"error": "Todos los campos son obligatorios"}), 400
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        cursor.execute(
+            "INSERT INTO Propietarios (RutArre, Nombre, ApePat, ApeMat, Email, Fono1, Fono2, Estado) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (rutArre, nombre, apePat, apeMat, email, fono1, fono2, estado)
+        )
+        
+        connection.commit()
+        return jsonify({"message": "Propietario creado exitosamente"}), 201
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
 
 # Endpoint para Crear Edificio
 @app.route('/edificio/crear', methods=['POST'])
@@ -96,7 +133,7 @@ def crear_edificio():
         connection.close()
 
 
-# Endpoint para listar edificios
+
 # Endpoint para Listar edificios
 @app.route('/edificio/listar', methods=['GET'])
 def listar_edificios():
@@ -104,14 +141,13 @@ def listar_edificios():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
 
-        # Consulta ajustada para el campo 'cod'
         cursor.execute("SELECT cod, Nombre, Direccion FROM Edificios")
         edificios = cursor.fetchall()
 
         edificios_list = []
         for edificio in edificios:
             edificios_list.append({
-                "cod": edificio[0],  # Cambio de CodEdificio a cod
+                "cod": edificio[0],
                 "Nombre": edificio[1],
                 "Direccion": edificio[2]
             })
@@ -125,22 +161,64 @@ def listar_edificios():
         cursor.close()
         connection.close()
 
+
+
+
+
+
+
+
+
 # Endpoint para Crear Departamento
 @app.route('/departamento/crear', methods=['POST'])
 def crear_departamento():
     data = request.json
-    cod_edificio = data.get('codDepto')
+    codDepto = data.get('codDepto')
+    cod_edificio = data.get('cod_edificio')
     piso = data.get('piso')
     numero = data.get('numero')
-    estado = data.get('estado')
-    arrendado = data.get('arrendado')
+    arrendado = data.get('arrendado')  # Puede ser 'si' o 'no'
     rut_prop = data.get('rut_prop')
+    estado = data.get('estado')
+    rutarre = data.get('rutarre')  # Opcional si arrendado es 'no'
+    fechainic = data.get('fechainic')
+    fechafinc = data.get('fechafinc')
+    observacion = data.get('observacion')
     num_hab = data.get('num_hab')
     num_baños = data.get('num_baños')
 
-    # Validación de campos
-    if not all([cod_edificio, piso, numero, estado, rut_prop, num_hab, num_baños]):
-        return jsonify({"error": "Todos los campos son obligatorios"}), 400
+    # Validaciones
+    errores = []
+
+    # Validar campos obligatorios comunes
+    if not codDepto:
+        errores.append("El código del departamento es obligatorio.")
+    if not cod_edificio:
+        errores.append("El código del edificio es obligatorio.")
+    if not piso:
+        errores.append("El piso es obligatorio.")
+    if not numero:
+        errores.append("El número es obligatorio.")
+    if not rut_prop:
+        errores.append("El RUT del propietario es obligatorio.")
+    if not estado:
+        errores.append("El estado es obligatorio.")
+    if not num_hab:
+        errores.append("El número de habitaciones es obligatorio.")
+    if not num_baños:
+        errores.append("El número de baños es obligatorio.")
+
+    # Validar arrendado y rutarre
+    if arrendado == "si" and not rutarre:
+        errores.append("El RUT del arrendatario es obligatorio si el departamento está arrendado.")
+
+    # Validar fechas
+    if arrendado == "si" and (not fechainic or not fechafinc):
+        errores.append("Las fechas de inicio y fin de contrato son obligatorias si el departamento está arrendado.")
+
+    # Si hay errores, devolverlos
+    if errores:
+        return jsonify({"error": "Errores de validación", "detalles": errores}), 400
 
     try:
         connection = mysql.connector.connect(**db_config)
@@ -148,9 +226,9 @@ def crear_departamento():
 
         # Insertar el nuevo departamento en la base de datos
         cursor.execute(
-            "INSERT INTO Departamentos (CodEdificio, Piso, Numero, Estado, Arrendado, RutProp, NumHab, NumBaños) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (cod_edificio, piso, numero, estado, arrendado, rut_prop, num_hab, num_baños)
+            "INSERT INTO Departamentos (CodDepto, CodEdificio, Piso, Numero, Arrendado, RutProp, Estado, RutArre, FechaIniC, FechaFinC, Observacion, NumHab, NumBaños)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (codDepto, cod_edificio, piso, numero, arrendado, rut_prop, estado, rutarre, fechainic, fechafinc, observacion, num_hab, num_baños)
         )
 
         connection.commit()
@@ -163,43 +241,8 @@ def crear_departamento():
         cursor.close()
         connection.close()
 
-# Endpoint para Generar Gastos Comunes para un Edificio
-@app.route('/gastos/generar', methods=['POST'])
-def generar_gastos():
-    data = request.json
-    mes = data.get('mes')
-    año = data.get('año')
-    cod_edificio = data.get('cod_edificio')
-    
-    if not all([año, cod_edificio]):
-        return jsonify({"error": "El campo 'año' y 'cod_edificio' son obligatorios"}), 400
-    
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
 
-        # Obtener los departamentos del edificio especificado
-        cursor.execute("SELECT CodDepto FROM Departamentos WHERE CodEdificio = %s", (cod_edificio,))
-        departamentos = cursor.fetchall()
-        
-        if not departamentos:
-            return jsonify({"error": "No existen departamentos para este edificio."}), 400
 
-        for depto in departamentos:
-            cursor.execute(
-                "INSERT INTO CuotasGC (Mes, Año, ValorPagado, FechaPago, Atrazado, CodDepto) VALUES (%s, %s, %s, %s, %s, %s)",
-                (mes, año, 0.00, None, False, depto[0])  # Asociar el gasto al departamento
-            )
-        
-        connection.commit()
-        return jsonify({"message": "Gastos generados exitosamente"}), 201
-
-    except mysql.connector.Error as err:
-        return jsonify({"error": str(err)}), 500
-
-    finally:
-        cursor.close()
-        connection.close()
 
 if __name__ == '__main__':
     app.run(debug=True)
