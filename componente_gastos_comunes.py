@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify, send_from_directory
 import mysql.connector
 from flask_cors import CORS
-from sqlalchemy import null
+from datetime import datetime
+
 
 # Definir la aplicación Flask
 app = Flask(__name__)
@@ -243,8 +244,7 @@ def listar_departamentos():
         connection.close()
 
 
-
-# Endpoint para generar gastos
+# Enpoint para generar gastos
 @app.route('/gastos/generar', methods=['POST'])
 def generar_gastos_comunes():
     data = request.json
@@ -254,6 +254,7 @@ def generar_gastos_comunes():
     departamentos = list(monto_departamento.keys())
 
     cantidad_departamentos = len(monto_departamento)
+    registros_creados = []  # Lista para almacenar los registros insertados
     
     # Validación de entrada
     if not anio:
@@ -263,7 +264,6 @@ def generar_gastos_comunes():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
 
-        # Si no se especifica un mes, generar gastos para todos los meses del año
         if not mes:
             meses = range(1, 13)  # Generar para todos los meses del año
         else:
@@ -271,33 +271,56 @@ def generar_gastos_comunes():
 
         for m in meses:
             if cantidad_departamentos == 0:
-                # Si no hay departamentos especificados, generar para todos los departamentos
                 cursor.execute("""
                     SELECT d.CodDepto, d.RutProp, d.RutArre, e.ValorGastoComun
                     FROM Departamentos d
                     INNER JOIN Edificios e ON d.CodEdificio = e.Cod
-                    """)
+                """)
                 departamentos_db = cursor.fetchall()
 
                 for depto in departamentos_db:
                     cod_depto, rut_prop, rut_arre, valor_gasto_comun = depto
 
-                    # Determinar el valor de la cuota
+                    cursor.execute("""
+                        SELECT COUNT(*) 
+                        FROM CuotasGC 
+                        WHERE Mes = %s AND Año = %s AND CodDepto = %s
+                    """, (m, anio, cod_depto))
+                    existe = cursor.fetchone()[0]
+
+                    if existe > 0:
+                        continue
+
                     valor_cuota = monto_departamento.get(cod_depto, valor_gasto_comun)
 
-                    # Insertar la cuota en la tabla CuotasGC
                     cursor.execute("""
                         INSERT INTO CuotasGC (Mes, Año, ValorCuota, FechaPago, Atrazado, CodDepto, RutProp, RutArre)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (m, anio, valor_cuota, None, 0, cod_depto, rut_prop, rut_arre))
+                    
+                    registros_creados.append({
+                        "Mes": m,
+                        "Año": anio,
+                        "ValorCuota": valor_cuota,
+                        "CodDepto": cod_depto,
+                        "RutProp": rut_prop,
+                        "RutArre": rut_arre
+                    })
 
             else:
-                # Si hay departamentos específicos, solo generar para esos departamentos
                 for cod_depto in departamentos:
-                    # Obtener el monto especificado para ese departamento
+                    cursor.execute("""
+                        SELECT COUNT(*) 
+                        FROM CuotasGC 
+                        WHERE Mes = %s AND Año = %s AND CodDepto = %s
+                    """, (m, anio, cod_depto))
+                    existe = cursor.fetchone()[0]
+
+                    if existe > 0:
+                        continue
+
                     valor_cuota = monto_departamento.get(cod_depto)
 
-                    # Obtener información del departamento específico
                     cursor.execute("""
                         SELECT d.RutProp, d.RutArre, e.ValorGastoComun
                         FROM Departamentos d
@@ -311,20 +334,26 @@ def generar_gastos_comunes():
 
                     rut_prop, rut_arre, valor_gasto_comun = departamento
 
-                    # Si no se ha especificado un monto, usar el valor de la columna 'ValorGastoComun' del edificio
                     if valor_cuota is None:
                         valor_cuota = valor_gasto_comun
 
-                    # Insertar la cuota en la tabla CuotasGC
                     cursor.execute("""
                         INSERT INTO CuotasGC (Mes, Año, ValorCuota, FechaPago, Atrazado, CodDepto, RutProp, RutArre)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     """, (m, anio, valor_cuota, None, 0, cod_depto, rut_prop, rut_arre))
+                    
+                    registros_creados.append({
+                        "Mes": m,
+                        "Año": anio,
+                        "ValorCuota": valor_cuota,
+                        "CodDepto": cod_depto,
+                        "RutProp": rut_prop,
+                        "RutArre": rut_arre
+                    })
 
-        # Confirmar los cambios en la base de datos
         connection.commit()
 
-        return jsonify({"message": "Gastos comunes generados exitosamente"}), 201
+        return jsonify({"message": "Gastos comunes generados exitosamente", "registros": registros_creados}), 201
 
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
@@ -332,46 +361,76 @@ def generar_gastos_comunes():
     finally:
         cursor.close()
         connection.close()
-
-
-
 
 
 # Endpoint para pagar gasto
 @app.route('/gastos/pagar', methods=['POST'])
-def marcar_pago():
+def marcar_como_pagado():
     data = request.json
-    cod_depto = data.get('cod_depto')
-    mes = data.get('mes')
-    anio = data.get('anio')
-    fecha_pago = data.get('fecha_pago')
+    departamento = data.get('departamento')
+    mes = data.get('mes')  # Mes a pagar
+    anio = data.get('anio')  # Año a pagar
+    fecha_pago = data.get('fecha_pago')  # Fecha de pago
 
-    # Validación de datos
-    if not all([cod_depto, mes, anio, fecha_pago]):
-        return jsonify({"error": "Todos los campos son obligatorios."}), 400
+    # Validación de entrada
+    if not all([departamento, mes, anio, fecha_pago]):
+        return jsonify({"error": "Todos los campos son obligatorios (departamento, mes, año, fecha_pago)."}), 400
 
     try:
+        anio = int(anio)
+        mes = int(mes)
+        # Convertir la fecha de pago a un objeto datetime
+        fecha_pago_dt = datetime.strptime(fecha_pago, '%Y-%m-%d')
+
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
 
-        # Verificar si existe el gasto común
-        cursor.execute(
-            "SELECT * FROM CuotasGC WHERE CodDepto = %s AND Mes = %s AND Año = %s",
-            (cod_depto, mes, anio)
-        )
-        cuota = cursor.fetchone()
+        # Verificar si ya existe un registro de pago para este departamento y período
+        cursor.execute("""
+            SELECT FechaPago, Atrazado
+            FROM CuotasGC
+            WHERE CodDepto = %s AND Mes = %s AND Año = %s
+        """, (departamento, mes, anio))
+        registro = cursor.fetchone()
 
-        if not cuota:
-            return jsonify({"error": "No se encontró el gasto común para el departamento."}), 404
+        if not registro:
+            return jsonify({"error": "No existe un registro de gasto común para este departamento y período."}), 404
 
-        # Marcar como pagado
-        cursor.execute(
-            "UPDATE CuotasGC SET ValorPagado = %s, FechaPago = %s WHERE CodDepto = %s AND Mes = %s AND Año = %s",
-            (cuota[3], fecha_pago, cod_depto, mes, anio)
-        )
+        fecha_pago_registrada, atrazado = registro  # Desempaquetar la tupla
 
+        # Verificar si ya se ha registrado un pago
+        if fecha_pago_registrada:
+            return jsonify({
+                "estado": "Pago duplicado",
+                "departamento": departamento,
+                "periodo": f"{mes:02d}-{anio}",
+                "fecha_pago": fecha_pago_registrada.strftime('%Y-%m-%d')  # Verificar si no es None
+            }), 400
+
+        # Calcular la fecha límite de pago (por ejemplo, fin del mes correspondiente)
+        import calendar
+        last_day = calendar.monthrange(anio, mes)[1]
+        fecha_limite = datetime(anio, mes, last_day)
+
+        # Determinar si el pago es dentro o fuera del plazo
+        dentro_del_plazo = fecha_pago_dt <= fecha_limite
+        estado_pago = "Pago exitoso dentro del plazo" if dentro_del_plazo else "Pago exitoso fuera de plazo"
+
+        # Actualizar el registro en la base de datos
+        cursor.execute("""
+            UPDATE CuotasGC
+            SET FechaPago = %s, Atrazado = %s
+            WHERE CodDepto = %s AND Mes = %s AND Año = %s
+        """, (fecha_pago_dt, not dentro_del_plazo, departamento, mes, anio))
         connection.commit()
-        return jsonify({"message": "Pago registrado correctamente"}), 200
+
+        # Respuesta con el estado de la transacción
+        return jsonify({
+            "estado": estado_pago,
+            "departamento": departamento,
+            "fecha_pago": fecha_pago_dt.strftime('%Y-%m-%d'),
+            "periodo": f"{mes:02d}-{anio}"
+        }), 200
 
     except mysql.connector.Error as err:
         return jsonify({"error": str(err)}), 500
@@ -381,49 +440,8 @@ def marcar_pago():
         connection.close()
 
 
-# Endpoint para listar gastos pendirtens
-@app.route('/gastos/pendientes', methods=['GET'])
-def listar_gastos_pendientes():
-    mes = request.args.get('mes')
-    anio = request.args.get('anio')
 
-    if not all([mes, anio]):
-        return jsonify({"error": "Mes y Año son obligatorios."}), 400
 
-    try:
-        connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
-
-        cursor.execute(
-            """
-            SELECT d.CodDepto, e.Nombre AS Edificio, c.Mes, c.Año, c.ValorPagado
-            FROM CuotasGC c
-            INNER JOIN Departamentos d ON c.CodDepto = d.CodDepto
-            INNER JOIN Edificios e ON d.CodEdificio = e.Cod
-            WHERE c.ValorPagado = 0 AND (c.Año < %s OR (c.Año = %s AND c.Mes <= %s))
-            ORDER BY c.Año, c.Mes
-            """, (anio, anio, mes)
-        )
-        gastos = cursor.fetchall()
-
-        gastos_list = []
-        for gasto in gastos:
-            gastos_list.append({
-                "departamento": gasto[0],
-                "edificio": gasto[1],
-                "mes": gasto[2],
-                "anio": gasto[3],
-                "valor_pagado": gasto[4]
-            })
-
-        return jsonify(gastos_list), 200
-
-    except mysql.connector.Error as err:
-        return jsonify({"error": str(err)}), 500
-
-    finally:
-        cursor.close()
-        connection.close()
 
 
 if __name__ == '__main__':
