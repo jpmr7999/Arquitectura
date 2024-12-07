@@ -440,6 +440,58 @@ def marcar_como_pagado():
         connection.close()
 
 
+# Enpoint para listar pendientes
+@app.route('/gastos/pendientes', methods=['POST'])
+def gastos_pendientes():
+    data = request.json
+    hasta_mes = int(data.get('hasta_mes'))  # Mes hasta el que se quiere consultar
+    hasta_anio = int(data.get('hasta_año'))  # Año hasta el que se quiere consultar
+
+    # Validación de entrada
+    if not all([hasta_mes, hasta_anio]):
+        return jsonify({"error": "Los campos hasta_mes y hasta_año son obligatorios."}), 400
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Obtener los gastos pendientes de todos los meses hasta el mes especificado
+        cursor.execute("""
+            SELECT d.CodDepto, d.RutProp, d.RutArre, e.ValorGastoComun, c.Mes, c.Año
+            FROM CuotasGC c
+            INNER JOIN Departamentos d ON c.CodDepto = d.CodDepto
+            INNER JOIN Edificios e ON d.CodEdificio = e.Cod
+            WHERE c.FechaPago IS NULL
+            AND (c.Año < %s OR (c.Año = %s AND c.Mes <= %s))
+            ORDER BY c.Año ASC, c.Mes ASC
+        """, (hasta_anio, hasta_anio, hasta_mes))
+
+        gastos = cursor.fetchall()
+
+        if not gastos:
+            return jsonify({"mensaje": "Sin montos pendientes"}), 200
+
+        # Formatear los resultados
+        gastos_pendientes = []
+        for gasto in gastos:
+            cod_depto, rut_prop, rut_arre, valor_gasto_comun, mes, anio = gasto
+            gastos_pendientes.append({
+                "CodDepto": cod_depto,
+                "RutProp": rut_prop,
+                "RutArre": rut_arre,
+                "ValorGastoComun": valor_gasto_comun,
+                "Mes": mes,
+                "Año": anio
+            })
+
+        return jsonify(gastos_pendientes), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
 
 
 

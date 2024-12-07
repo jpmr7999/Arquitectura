@@ -426,23 +426,7 @@
     </div>
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    <!-- PAGAR GASTOS -->
     <div class="container">
         <h1>Marcar Como Pagado</h1>
         <form id="form-marcar-pago">
@@ -557,10 +541,81 @@
         // Ejecutar la carga inicial de departamentos al cargar la página
         document.addEventListener("DOMContentLoaded", cargarDepartamentos);
     </script>
-    
 
+    <!-- LISTAR PENDIENTES -->
+    <div class="container">
+        <h1>Consultar Gastos Pendientes</h1>
+        <form id="form-consultar-gastos">
+            <label for="hasta_mes">Mes Hasta:</label>
+            <select id="hasta_mes" name="hasta_mes" required>
+                <option value="">Selecciona un mes</option>
+                <option value="1">Enero</option>
+                <option value="2">Febrero</option>
+                <option value="3">Marzo</option>
+                <option value="4">Abril</option>
+                <option value="5">Mayo</option>
+                <option value="6">Junio</option>
+                <option value="7">Julio</option>
+                <option value="8">Agosto</option>
+                <option value="9">Septiembre</option>
+                <option value="10">Octubre</option>
+                <option value="11">Noviembre</option>
+                <option value="12">Diciembre</option>
+            </select><br>
 
+            <label for="hasta_año">Año Hasta:</label>
+            <input type="number" id="hasta_año" name="hasta_año" required placeholder="Ejemplo: 2024"><br>
 
+            <button type="submit">Consultar Gastos Pendientes</button>
+        </form>
+
+        <div class="result" id="result">
+            <h3>Resultado</h3>
+            <pre id="output"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("form-consultar-gastos").addEventListener("submit", async function(event) {
+            event.preventDefault();
+
+            const hasta_mes = document.getElementById("hasta_mes").value;
+            const hasta_año = document.getElementById("hasta_año").value;
+
+            // Validar que se seleccionaron los campos
+            if (!hasta_mes || !hasta_año) {
+                alert("Por favor, completa todos los campos.");
+                return;
+            }
+
+            const data = {
+                hasta_mes: hasta_mes,
+                hasta_año: hasta_año
+            };
+
+            try {
+                const response = await fetch("http://localhost:5000/gastos/pendientes", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                const output = document.getElementById("output");
+                if (response.ok) {
+                    output.textContent = JSON.stringify(result, null, 2);
+                } else {
+                    output.textContent = JSON.stringify(result.error, null, 2);
+                }
+            } catch (error) {
+                console.error("Error al consultar los gastos pendientes:", error);
+                alert("Ocurrió un error al consultar los gastos.");
+            }
+        });
+    </script>
 
 
     <script>
