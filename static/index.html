@@ -10,7 +10,7 @@
             margin: 20px;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: 0 auto;
         }
         h1 {
@@ -27,26 +27,37 @@
             margin: 10px 0 5px;
         }
         input, select, button {
-            width: 100%;
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        button {
-            background-color: #28a745;
+        .row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .row select, .row input {
+            flex: 1;
+        }
+        .row button {
+            background-color: #dc3545;
             color: white;
+            border: none;
             cursor: pointer;
         }
-        button:hover {
-            background-color: #218838;
+        .row button:hover {
+            background-color: #c82333;
         }
-        .result {
-            margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #f8f9fa;
+        .add-row {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .add-row:hover {
+            background-color: #218838;
         }
     </style>
 </head>
@@ -133,12 +144,6 @@
             <label for="inmobiliaria">Inmobiliaria:</label>
             <input type="text" id="inmobiliaria" name="inmobiliaria" required><br>
 
-            <label for="lat">Latitud:</label>
-            <input type="text" id="lat" name="lat" required><br>
-
-            <label for="log">Longitud:</label>
-            <input type="text" id="log" name="log" required><br>
-
             <label for="estado">Estado:</label>
             <input type="text" id="estado-edificio" name="estado-edificio" required><br>
 
@@ -158,8 +163,6 @@
                 let nombre = document.getElementById("nombre-edificio").value;
                 let direccion = document.getElementById("direccion").value;
                 let inmobiliaria = document.getElementById("inmobiliaria").value;
-                let lat = parseFloat(document.getElementById("lat").value);
-                let log = parseFloat(document.getElementById("log").value);
                 let estado = document.getElementById("estado-edificio").value;
                 let npisos = parseInt(document.getElementById("npisos").value);
                 let valor_gasto_comun = parseFloat(document.getElementById("valor_gasto_comun").value);
@@ -168,8 +171,6 @@
                     nombre: nombre,
                     direccion: direccion,
                     inmobiliaria: inmobiliaria,
-                    lat: lat,
-                    log: log,
                     estado: estado,
                     npisos: npisos,
                     valor_gasto_comun: valor_gasto_comun
@@ -189,36 +190,6 @@
                     alert('Ocurrió un error en la solicitud');
                 });
             });
-
-            async function generarGastos() {
-                const mes = document.getElementById('mes-generar').value;
-                const año = document.getElementById('año-generar').value;
-                const cod_edificio = document.getElementById('cod_edificio-generar').value;
-                const cod_departamento = document.getElementById('cod_departamento-generar').value;
-
-                if (!año || !cod_edificio || !cod_departamento) {
-                    alert('El campo "Año", "Código de Edificio" y "Código de Departamento" son obligatorios.');
-                    return;
-                }
-
-                const data = {
-                    año: parseInt(año),
-                    cod_edificio: parseInt(cod_edificio),
-                    cod_departamento: parseInt(cod_departamento)
-                };
-
-                try {
-                    const response = await fetch('http://localhost:5000/gastos/generar', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-                    document.getElementById('output').textContent = JSON.stringify(result, null, 2);
-                } catch (error) {
-                    document.getElementById('output').textContent = error.message;
-                }
-            }
         </script>
 
         <h1>Crear Departamento</h1>
@@ -236,32 +207,9 @@
         
             <label for="rut_prop">RUT del Propietario:</label>
             <input type="text" id="rut_prop" name="rut_prop" required><br><br>
-
-            <label for="estado">Estado:</label>
-            <select id="estado" name="estado" required>
-                <option value="Activo">Activo</option>
-                <option value="Inactivo">Inactivo</option>
-                <option value="Inactivo">Mantenimiento</option>
-            </select><br><br>
-        
-            <!-- SI/NO, EN CASO DE SI APARECE EL CAMPO DE RUT ARRENDATARIO, EN CASO DE NO NULL -->
-            <label for="arrendado">Arrendado: </label>
-            <select id="arrendado" name="arrendado" required>
-                <option value="no"> No</option>
-                <option value="si"> Si</option>
-            </select>
             
             <label for="rutarre">Rut Arrendatario</label>
             <input type="number" id="rutarre" name="rutarre">
-        
-            <label for="fechainic">Fecha Inicio contrato</label>
-            <input type="date" id="fechainic" name="fechainic">
-
-            <label for="fechafinc">Fecha fin contrato</label>
-            <input type="date" id="fechafinc" name="fechafinc">
-
-            <label for="observacion">observacion</label>
-            <input type="text" id="observacion" name="observacion">
 
             <label for="num_hab">Número de Habitaciones:</label>
             <input type="number" id="num_hab" name="num_hab" required><br><br>
@@ -277,6 +225,7 @@
                 try {
                     const response = await fetch('http://localhost:5000/edificio/listar');
                     const data = await response.json();
+                    console.log(data);
                     if (Array.isArray(data)) {
                         const select = document.getElementById("cod_edificio");
                         data.forEach(edificio => {
@@ -295,7 +244,7 @@
             }
 
             // Ejecutar al cargar la página
-            window.onload = cargarEdificios;
+            document.addEventListener("DOMContentLoaded", cargarEdificios);
 
             // Lógica para crear un departamento
             async function enviarFormulario() {
@@ -307,12 +256,7 @@
                     numero: formData.get("numero"),
                     num_hab: formData.get("num_hab"),
                     num_baños: formData.get("num_baños"),
-                    estado: formData.get("estado"),
-                    observacion: formData.get("observacion"),
-                    fechainic: formData.get('fechainic'),
-                    fechafinc: formData.get('fechafinc'),
                     rut_prop: formData.get("rut_prop"),
-                    arrendado: formData.get("arrendado") === "on",
                     rutarre: formData.get("rutarre")
                 };
                 
@@ -334,7 +278,140 @@
             }
         </script>
 
+        <!-- GENERAR GASTOS COMUNES -->
+        <div class="container">
+            <h1>Generar Gastos Comunes</h1>
+            <form id="form-generar-gastos">
+                <label for="anio">Año:</label>
+                <input type="number" id="anio" name="anio" required><br>
+    
+                <label for="mes">Mes (opcional):</label>
+                <input type="number" id="mes" name="mes" min="1" max="12"><br>
+    
+                <div id="departamentos-container">
+                    <div class="row">
+                        <select class="select-departamento">
+                            <option value="">Selecciona un departamento</option>
+                            <!-- Opciones dinámicas cargadas por JavaScript -->
+                        </select>
+                        <input type="number" class="monto-departamento" placeholder="Monto del gasto">
+                        <button type="button" class="remove-row" onclick="removeRow(this)">X</button>
+                    </div>
+                </div>
+    
+                <button type="button" class="add-row" onclick="addRow()">+ Añadir Departamento</button>
+                <br>
+                <button type="submit">Generar Gastos</button>
+            </form>
+            <pre id="output"></pre>
+        </div>
 
+        <script>
+            // Función para cargar los departamentos en los selects
+            async function cargarDepartamentos() {
+                try {
+                    const response = await fetch('http://localhost:5000/departamento/listar');
+                    const data = await response.json();
+                    console.log(data);
+
+                    // Verificar si la respuesta es un array de departamentos
+                    if (Array.isArray(data)) {
+                        // Obtener todos los selects de departamento
+                        const selects = document.querySelectorAll('.select-departamento');
+
+                        // Para cada select, cargar las opciones de los departamentos
+                        selects.forEach(select => {
+                            data.forEach(departamento => {
+                                const option = document.createElement("option");
+                                option.value = departamento.cod;
+                                option.textContent = `Departamento ${departamento.cod}`; // Ajusta la visualización como desees
+                                select.appendChild(option);
+                            });
+                        });
+                    } else {
+                        alert("Error al cargar los departamentos.");
+                    }
+                } catch (error) {
+                    console.error("Error al cargar los departamentos:", error);
+                    alert("Error al cargar los departamentos.");
+                }
+            }
+
+            // Ejecutar al cargar la página
+            document.addEventListener("DOMContentLoaded", cargarDepartamentos);
+    
+            function addRow() {
+                const container = document.getElementById("departamentos-container");
+    
+                const row = document.createElement("div");
+                row.classList.add("row");
+    
+                const select = document.createElement("select");
+                select.classList.add("select-departamento");
+                select.required = true;
+                cargarDepartamentos(select);
+    
+                const input = document.createElement("input");
+                input.type = "number";
+                input.classList.add("monto-departamento");
+                input.placeholder = "Monto del gasto";
+                input.required = true;
+    
+                const button = document.createElement("button");
+                button.type = "button";
+                button.classList.add("remove-row");
+                button.textContent = "X";
+                button.onclick = () => removeRow(button);
+    
+                row.appendChild(select);
+                row.appendChild(input);
+                row.appendChild(button);
+    
+                container.appendChild(row);
+            }
+    
+            function removeRow(button) {
+                const row = button.parentElement;
+                row.remove();
+            }
+    
+            document.getElementById("form-generar-gastos").addEventListener("submit", function(event) {
+                event.preventDefault();
+
+                const anio = document.getElementById("anio").value;
+                const mes = document.getElementById("mes").value;
+
+                const monto_departamento = {};
+
+                // Recorre todas las filas y recoge los valores de cada select y monto
+                document.querySelectorAll(".row").forEach(row => {
+                    const select = row.querySelector(".select-departamento");
+                    const input = row.querySelector(".monto-departamento");
+
+                    // Asegurarse de que tanto el select como el input tengan valores
+                    if (select.value && input.value) {
+                        monto_departamento[select.value] = parseFloat(input.value); // Monto para ese departamento
+                    }
+                });
+
+                const data = {
+                    mes: mes ? parseInt(mes) : null,  // Si el mes está vacío, se genera para todos los meses
+                    anio: parseInt(anio),
+                    monto_departamento: monto_departamento
+                };
+
+                document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+
+                // Enviar datos al backend
+                fetch("http://localhost:5000/gastos/generar", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                }).then(response => response.json())
+                    .then(data => alert(data.message || JSON.stringify(data)))
+                    .catch(error => console.error("Error:", error));
+            });
+        </script>
         
 
 

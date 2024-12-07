@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 import mysql.connector
 from flask_cors import CORS
+from sqlalchemy import null
 
 # Definir la aplicación Flask
 app = Flask(__name__)
@@ -103,13 +104,11 @@ def crear_edificio():
     nombre = data.get('nombre')
     direccion = data.get('direccion')
     inmobiliaria = data.get('inmobiliaria')
-    lat = data.get('lat')
-    log = data.get('log')
     estado = data.get('estado')
     npisos = data.get('npisos')
     valor_gasto_comun = data.get('valor_gasto_comun')
 
-    if not all([nombre, direccion, inmobiliaria, lat, log, estado, npisos, valor_gasto_comun]):
+    if not all([nombre, direccion, inmobiliaria, estado, npisos, valor_gasto_comun]):
         return jsonify({"error": "Todos los campos son obligatorios"}), 400
 
     try:
@@ -117,9 +116,9 @@ def crear_edificio():
         cursor = connection.cursor()
 
         cursor.execute(
-            "INSERT INTO Edificios (Nombre, Direccion, Inmobiliaria, Lat, Log, Estado, NPisos, ValorGastoComun) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (nombre, direccion, inmobiliaria, lat, log, estado, npisos, valor_gasto_comun)
+            "INSERT INTO Edificios (Nombre, Direccion, Inmobiliaria, Estado, NPisos, ValorGastoComun) "
+            "VALUES (%s, %s, %s, %s, %s, %s)",
+            (nombre, direccion, inmobiliaria, estado, npisos, valor_gasto_comun)
         )
         
         connection.commit()
@@ -162,13 +161,6 @@ def listar_edificios():
         connection.close()
 
 
-
-
-
-
-
-
-
 # Endpoint para Crear Departamento
 @app.route('/departamento/crear', methods=['POST'])
 def crear_departamento():
@@ -177,13 +169,8 @@ def crear_departamento():
     cod_edificio = data.get('cod_edificio')
     piso = data.get('piso')
     numero = data.get('numero')
-    arrendado = data.get('arrendado')  # Puede ser 'si' o 'no'
     rut_prop = data.get('rut_prop')
-    estado = data.get('estado')
-    rutarre = data.get('rutarre')  # Opcional si arrendado es 'no'
-    fechainic = data.get('fechainic')
-    fechafinc = data.get('fechafinc')
-    observacion = data.get('observacion')
+    rutarre = data.get('rutarre')
     num_hab = data.get('num_hab')
     num_baños = data.get('num_baños')
 
@@ -191,8 +178,6 @@ def crear_departamento():
     errores = []
 
     # Validar campos obligatorios comunes
-    if not codDepto:
-        errores.append("El código del departamento es obligatorio.")
     if not cod_edificio:
         errores.append("El código del edificio es obligatorio.")
     if not piso:
@@ -201,20 +186,10 @@ def crear_departamento():
         errores.append("El número es obligatorio.")
     if not rut_prop:
         errores.append("El RUT del propietario es obligatorio.")
-    if not estado:
-        errores.append("El estado es obligatorio.")
     if not num_hab:
         errores.append("El número de habitaciones es obligatorio.")
     if not num_baños:
         errores.append("El número de baños es obligatorio.")
-
-    # Validar arrendado y rutarre
-    if arrendado == "si" and not rutarre:
-        errores.append("El RUT del arrendatario es obligatorio si el departamento está arrendado.")
-
-    # Validar fechas
-    if arrendado == "si" and (not fechainic or not fechafinc):
-        errores.append("Las fechas de inicio y fin de contrato son obligatorias si el departamento está arrendado.")
 
     # Si hay errores, devolverlos
     if errores:
@@ -226,9 +201,9 @@ def crear_departamento():
 
         # Insertar el nuevo departamento en la base de datos
         cursor.execute(
-            "INSERT INTO Departamentos (CodDepto, CodEdificio, Piso, Numero, Arrendado, RutProp, Estado, RutArre, FechaIniC, FechaFinC, Observacion, NumHab, NumBaños)"
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (codDepto, cod_edificio, piso, numero, arrendado, rut_prop, estado, rutarre, fechainic, fechafinc, observacion, num_hab, num_baños)
+            "INSERT INTO Departamentos (CodDepto, CodEdificio, Piso, Numero, RutProp, RutArre, NumHab, NumBaños)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+            (codDepto, cod_edificio, piso, numero, rut_prop, rutarre, num_hab, num_baños)
         )
 
         connection.commit()
@@ -242,6 +217,213 @@ def crear_departamento():
         connection.close()
 
 
+# Endpoint para Listar departamentos
+@app.route('/departamento/listar', methods=['GET'])
+def listar_departamentos():
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        cursor.execute("SELECT CodDepto FROM departamentos")
+        departamentos = cursor.fetchall()
+
+        departamentos_list = []
+        for departamento in departamentos:
+            departamentos_list.append({
+                "cod": departamento[0]
+            })
+
+        return jsonify(departamentos_list), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+
+# Endpoint para generar gastos
+@app.route('/gastos/generar', methods=['POST'])
+def generar_gastos_comunes():
+    data = request.json
+    mes = data.get('mes')
+    anio = data.get('anio')
+    monto_departamento = data.get('monto_departamento')
+    departamentos = list(monto_departamento.keys())
+
+    cantidad_departamentos = len(monto_departamento)
+    
+    # Validación de entrada
+    if not anio:
+        return jsonify({"error": "El año es obligatorio."}), 400
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Si no se especifica un mes, generar gastos para todos los meses del año
+        if not mes:
+            meses = range(1, 13)  # Generar para todos los meses del año
+        else:
+            meses = [mes]  # Generar solo para el mes especificado
+
+        for m in meses:
+            if cantidad_departamentos == 0:
+                # Si no hay departamentos especificados, generar para todos los departamentos
+                cursor.execute("""
+                    SELECT d.CodDepto, d.RutProp, d.RutArre, e.ValorGastoComun
+                    FROM Departamentos d
+                    INNER JOIN Edificios e ON d.CodEdificio = e.Cod
+                    """)
+                departamentos_db = cursor.fetchall()
+
+                for depto in departamentos_db:
+                    cod_depto, rut_prop, rut_arre, valor_gasto_comun = depto
+
+                    # Determinar el valor de la cuota
+                    valor_cuota = monto_departamento.get(cod_depto, valor_gasto_comun)
+
+                    # Insertar la cuota en la tabla CuotasGC
+                    cursor.execute("""
+                        INSERT INTO CuotasGC (Mes, Año, ValorCuota, FechaPago, Atrazado, CodDepto, RutProp, RutArre)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (m, anio, valor_cuota, None, 0, cod_depto, rut_prop, rut_arre))
+
+            else:
+                # Si hay departamentos específicos, solo generar para esos departamentos
+                for cod_depto in departamentos:
+                    # Obtener el monto especificado para ese departamento
+                    valor_cuota = monto_departamento.get(cod_depto)
+
+                    # Obtener información del departamento específico
+                    cursor.execute("""
+                        SELECT d.RutProp, d.RutArre, e.ValorGastoComun
+                        FROM Departamentos d
+                        INNER JOIN Edificios e ON d.CodEdificio = e.Cod
+                        WHERE d.CodDepto = %s
+                    """, (cod_depto,))
+                    departamento = cursor.fetchone()
+
+                    if not departamento:
+                        return jsonify({"error": f"El departamento {cod_depto} no existe."}), 400
+
+                    rut_prop, rut_arre, valor_gasto_comun = departamento
+
+                    # Si no se ha especificado un monto, usar el valor de la columna 'ValorGastoComun' del edificio
+                    if valor_cuota is None:
+                        valor_cuota = valor_gasto_comun
+
+                    # Insertar la cuota en la tabla CuotasGC
+                    cursor.execute("""
+                        INSERT INTO CuotasGC (Mes, Año, ValorCuota, FechaPago, Atrazado, CodDepto, RutProp, RutArre)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (m, anio, valor_cuota, None, 0, cod_depto, rut_prop, rut_arre))
+
+        # Confirmar los cambios en la base de datos
+        connection.commit()
+
+        return jsonify({"message": "Gastos comunes generados exitosamente"}), 201
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+
+
+
+# Endpoint para pagar gasto
+@app.route('/gastos/pagar', methods=['POST'])
+def marcar_pago():
+    data = request.json
+    cod_depto = data.get('cod_depto')
+    mes = data.get('mes')
+    anio = data.get('anio')
+    fecha_pago = data.get('fecha_pago')
+
+    # Validación de datos
+    if not all([cod_depto, mes, anio, fecha_pago]):
+        return jsonify({"error": "Todos los campos son obligatorios."}), 400
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        # Verificar si existe el gasto común
+        cursor.execute(
+            "SELECT * FROM CuotasGC WHERE CodDepto = %s AND Mes = %s AND Año = %s",
+            (cod_depto, mes, anio)
+        )
+        cuota = cursor.fetchone()
+
+        if not cuota:
+            return jsonify({"error": "No se encontró el gasto común para el departamento."}), 404
+
+        # Marcar como pagado
+        cursor.execute(
+            "UPDATE CuotasGC SET ValorPagado = %s, FechaPago = %s WHERE CodDepto = %s AND Mes = %s AND Año = %s",
+            (cuota[3], fecha_pago, cod_depto, mes, anio)
+        )
+
+        connection.commit()
+        return jsonify({"message": "Pago registrado correctamente"}), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
+
+
+# Endpoint para listar gastos pendirtens
+@app.route('/gastos/pendientes', methods=['GET'])
+def listar_gastos_pendientes():
+    mes = request.args.get('mes')
+    anio = request.args.get('anio')
+
+    if not all([mes, anio]):
+        return jsonify({"error": "Mes y Año son obligatorios."}), 400
+
+    try:
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            SELECT d.CodDepto, e.Nombre AS Edificio, c.Mes, c.Año, c.ValorPagado
+            FROM CuotasGC c
+            INNER JOIN Departamentos d ON c.CodDepto = d.CodDepto
+            INNER JOIN Edificios e ON d.CodEdificio = e.Cod
+            WHERE c.ValorPagado = 0 AND (c.Año < %s OR (c.Año = %s AND c.Mes <= %s))
+            ORDER BY c.Año, c.Mes
+            """, (anio, anio, mes)
+        )
+        gastos = cursor.fetchall()
+
+        gastos_list = []
+        for gasto in gastos:
+            gastos_list.append({
+                "departamento": gasto[0],
+                "edificio": gasto[1],
+                "mes": gasto[2],
+                "anio": gasto[3],
+                "valor_pagado": gasto[4]
+            })
+
+        return jsonify(gastos_list), 200
+
+    except mysql.connector.Error as err:
+        return jsonify({"error": str(err)}), 500
+
+    finally:
+        cursor.close()
+        connection.close()
 
 
 if __name__ == '__main__':
