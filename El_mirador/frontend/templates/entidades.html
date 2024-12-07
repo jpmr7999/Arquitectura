@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'css/entidades.css' %}">
+</head>
+<body>
+    <h2>Crear Propietario</h2>
+        <form id="form-propietario">
+            <!-- Formulario de propietario -->
+            <label for="rut">RUT:</label>
+            <input type="text" id="rut" name="rut" required><br>
+
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre-propietario" name="nombre-propietario" required><br>
+
+            <label for="ape_pat">Apellido Paterno:</label>
+            <input type="text" id="ape_pat" name="ape_pat" required><br>
+
+            <label for="ape_mat">Apellido Materno:</label>
+            <input type="text" id="ape_mat" name="ape_mat" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="fono1">Teléfono 1:</label>
+            <input type="text" id="fono1" name="fono1" required><br>
+
+            <label for="fono2">Teléfono 2:</label>
+            <input type="text" id="fono2" name="fono2"><br>
+
+            <label for="estado">Estado:</label>
+            <input type="text" id="estado-propietario" name="estado-propietario" required><br>
+
+            <button type="submit">Crear Propietario</button>
+        </form>
+
+
+        <h2>Crear Edificio</h2>
+        <form id="form-edificio">
+            <!-- Formulario de edificio -->
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre-edificio" name="nombre-edificio" required><br>
+
+            <label for="direccion">Dirección:</label>
+            <input type="text" id="direccion" name="direccion" required><br>
+
+            <label for="inmobiliaria">Inmobiliaria:</label>
+            <input type="text" id="inmobiliaria" name="inmobiliaria" required><br>
+
+            <label for="estado">Estado:</label>
+            <input type="text" id="estado-edificio" name="estado-edificio" required><br>
+
+            <label for="npisos">Número de Pisos:</label>
+            <input type="number" id="npisos" name="npisos" required><br>
+
+            <label for="valor_gasto_comun">Valor Gasto Común:</label>
+            <input type="number" id="valor_gasto_comun" name="valor_gasto_comun" required><br>
+
+            <button type="submit">Crear Edificio</button>
+        </form>
+
+        <h1>Crear Departamento</h1>
+        <form id="formDepartamento" onsubmit="event.preventDefault(); enviarFormulario();">
+            <label for="cod_edificio">Edificio:</label>
+            <select id="cod_edificio" name="cod_edificio" required>
+                <option value="">Selecciona un edificio</option>
+            </select><br><br>
+        
+            <label for="piso">Piso:</label>
+            <input type="number" id="piso" name="piso" required><br><br>
+        
+            <label for="numero">Número:</label>
+            <input type="number" id="numero" name="numero" required><br><br>
+        
+            <label for="rut_prop">RUT del Propietario:</label>
+            <input type="text" id="rut_prop" name="rut_prop" required><br><br>
+            
+            <label for="rutarre">Rut Arrendatario</label>
+            <input type="number" id="rutarre" name="rutarre">
+
+            <label for="num_hab">Número de Habitaciones:</label>
+            <input type="number" id="num_hab" name="num_hab" required><br><br>
+        
+            <label for="num_baños">Número de Baños:</label>
+            <input type="number" id="num_baños" name="num_baños" required><br><br>
+        
+            <button type="submit">Crear Departamento</button>
+        </form>
+
+        <script src="{% static 'js/entidades.js' %}"></script>
+</body>
+</html>
