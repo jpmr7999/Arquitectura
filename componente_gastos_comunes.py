@@ -12,11 +12,19 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configuración de conexión a MySQL
 db_config = {
-    "host": "localhost",
-    "user": "root",
-    "password": "5555",  # Asegúrate de que tu contraseña esté configurada correctamente
-    "database": "db_elmirador"  # Asegúrate de que el nombre de la base de datos esté bien
+    "host": "br2oevp1xnr7ftgjsovi-mysql.services.clever-cloud.com",
+    "user": "uajvpqf9cugiibgy",
+    "password": "0yg2iVfAjxgFu78vBTwU",  # Asegúrate de que tu contraseña esté configurada correctamente
+    "database": "br2oevp1xnr7ftgjsovi",  # Asegúrate de que el nombre de la base de datos esté bien
+    "port": 3306
 }
+
+try:
+    conn = mysql.connector.connect(**db_config)
+    print("Conexión exitosa a la base de datos")
+    conn.close()
+except mysql.connector.Error as e:
+    print(f"Error al conectar a la base de datos: {e}")
 
 # Endpoint para servir index.html
 @app.route('/')
@@ -225,7 +233,7 @@ def listar_departamentos():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
 
-        cursor.execute("SELECT CodDepto FROM departamentos")
+        cursor.execute("SELECT CodDepto FROM Departamentos")
         departamentos = cursor.fetchall()
 
         departamentos_list = []
