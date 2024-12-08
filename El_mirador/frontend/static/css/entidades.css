@@ -1,54 +1,18 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
+/* Ajustes específicos para Entidades */
+.container h2 {
+    color: #8a2be2; /* Violeta brillante */
 }
-.container {
-    max-width: 800px;
-    margin: 0 auto;
+
+input[type="text"], input[type="email"], input[type="number"], select {
+    background-color: #f5eaff; /* Fondo lila tenue */
+    border: 1px solid #c3a7e7; /* Borde lila claro */
 }
-h1 {
-    text-align: center;
+
+button[type="submit"] {
+    background-color: #9c27b0; /* Violeta intenso */
+    color: #ffffff; /* Texto blanco */
 }
-form {
-    margin-bottom: 20px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-label {
-    display: block;
-    margin: 10px 0 5px;
-}
-input, select, button {
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-.row {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-.row select, .row input {
-    flex: 1;
-}
-.row button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    cursor: pointer;
-}
-.row button:hover {
-    background-color: #c82333;
-}
-.add-row {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 10px;
-}
-.add-row:hover {
-    background-color: #218838;
+
+button[type="submit"]:hover {
+    background-color: #7b1fa2; /* Violeta más oscuro */
 }

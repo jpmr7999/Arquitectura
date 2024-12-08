@@ -1,54 +1,141 @@
+/* General */
 body {
     font-family: Arial, sans-serif;
-    margin: 20px;
+    margin: 0;
+    padding: 0;
+    background-color: #f9f5ff; /* Fondo principal lila claro */
+    color: #4a316e; /* Texto principal en morado oscuro */
 }
+
+/* Contenedor principal */
 .container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-h1 {
-    text-align: center;
-}
-form {
-    margin-bottom: 20px;
+    width: 90%;
+    max-width: 1200px;
+    margin: 20px auto;
+    background: #ffffff; /* Fondo blanco para los contenedores */
     padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
+
+/* Encabezados */
+h1, h2, h3 {
+    color: #6a0dad; /* Morado intenso */
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+/* Formularios */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 label {
-    display: block;
-    margin: 10px 0 5px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #5c4d7d; /* Morado medio */
 }
+
 input, select, button {
     padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
+    font-size: 16px;
+    border: 1px solid #c3a7e7; /* Borde lila */
     border-radius: 5px;
+    width: 100%;
+    background-color: #f8f2ff; /* Fondo lila claro */
+    color: #4a316e; /* Texto morado oscuro */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
-.row {
-    display: flex;
-    gap: 10px;
-    align-items: center;
+
+input:focus, select:focus {
+    outline: none;
+    border-color: #6a0dad; /* Resaltado morado */
+    box-shadow: 0 0 5px rgba(106, 13, 173, 0.5);
 }
-.row select, .row input {
-    flex: 1;
-}
-.row button {
-    background-color: #dc3545;
-    color: white;
-    border: none;
+
+/* Botones */
+button {
+    background-color: #6a0dad; /* Morado intenso */
+    color: #ffffff; /* Texto blanco */
     cursor: pointer;
+    border: none;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
-.row button:hover {
-    background-color: #c82333;
+
+button:hover {
+    background-color: #4a316e; /* Morado oscuro */
+    transform: scale(1.02);
 }
+
+button:disabled {
+    background-color: #c3a7e7; /* Lila tenue */
+    cursor: not-allowed;
+}
+
+/* Botones adicionales */
 .add-row {
-    background-color: #28a745;
-    color: white;
-    border: none;
-    cursor: pointer;
-    margin-top: 10px;
+    background-color: #8a2be2; /* Violeta brillante */
 }
+
 .add-row:hover {
-    background-color: #218838;
+    background-color: #6a0dad;
+}
+
+.remove-row {
+    background-color: #c2185b; /* Rojo oscuro */
+    color: #fff;
+}
+
+.remove-row:hover {
+    background-color: #aa1649;
+}
+
+/* Tablas */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+th {
+    background-color: #6a0dad; /* Morado intenso */
+    color: #fff; /* Texto blanco */
+}
+
+tr:nth-child(even) {
+    background-color: #f3e6ff; /* Fondo lila claro */
+}
+
+tr:hover {
+    background-color: #e1ccf7; /* Resaltado en lila tenue */
+}
+
+/* Resultados */
+.result {
+    margin-top: 20px;
+    padding: 15px;
+    border: 1px solid #6a0dad;
+    background-color: #f3e6ff; /* Fondo lila claro */
+    border-radius: 5px;
+    color: #4a316e;
+}
+
+/* Enlaces */
+a {
+    text-decoration: none;
+    color: #6a0dad;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+a:hover {
+    color: #4a316e;
 }
